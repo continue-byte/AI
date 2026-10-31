@@ -1,0 +1,44 @@
+# ===== Render 部署配置：后端 API + MySQL =====
+# 前端部署在 Vercel，这里只管后端
+services:
+  # 后端 Web Service
+  - type: web
+    name: colabee-api
+    runtime: node
+    rootDir: .
+    buildCommand: npm install
+    startCommand: node server/index.cjs
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: colabee-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: colabee-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: colabee-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: colabee-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: colabee-db
+          property: database
+      - key: DB_SSL
+        value: "true"
+
+  # MySQL 数据库
+  - type: mysql
+    name: colabee-db
+    plan: free
