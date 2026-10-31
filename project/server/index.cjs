@@ -312,11 +312,27 @@ app.patch('/api/users/:id/status', authMiddleware, async (req, res) => {
   }
 })
 
+// ===== 生产环境：托管前端静态文件（单端口部署，前端 build 到 dist/）=====
+const path = require('path')
+const fs = require('fs')
+const distPath = path.join(__dirname, '..', 'dist')
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath))
+  // SPA 兜底：非 API 请求返回 index.html（Express 5 已移除 '*' 通配符，改用中间件）
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health')) return next()
+    res.sendFile(path.join(distPath, 'index.html'))
+  })
+  console.log('🌐 前端静态文件已托管：' + distPath)
+} else {
+  console.log('⚠️  未找到 dist 目录，前端将不托管（开发模式请用 Vite dev server）')
+}
+
 // ===== 启动 =====
 ensureReady().then(() => {
   app.listen(PORT, () => {
-    console.log(`🚀 后端 API 运行中：http://localhost:${PORT}`)
+    console.log(`🚀 服务运行中：http://localhost:${PORT}`)
     console.log(`   📦 数据库：${process.env.DB_NAME}@${process.env.DB_HOST}:${process.env.DB_PORT}`)
-    console.log(`   💡 前端代理已自动转发 /api → http://localhost:${PORT}`)
+    console.log(`   🌐 前端页面：http://localhost:${PORT}/`)
   })
 })
